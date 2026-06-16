@@ -22,6 +22,8 @@ jobs:
     steps:
       # 1. Check out your code onto the runner.
       - uses: actions/checkout@v4
+        with:
+          lfs: true  # pull the LFS-tracked model so tests load the real artifact
 
       # 2. Install Python.
       - name: Set up Python
@@ -51,5 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true  # the image COPYs models/, so the real LFS artifact is needed
       - name: Build Docker image
         run: docker build -t telco-churn-api:ci .
