@@ -1,0 +1,15 @@
+# docker-compose lets you start the API (and optionally an MLflow UI) with one
+# command: `docker compose up`. Handy for local development. Not required for
+# deployment, but nice to have.
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

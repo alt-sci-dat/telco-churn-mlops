@@ -1,0 +1,16 @@
+# Keep the image small + the build fast by excluding things the container
+# doesn't need. Smaller build context = quicker, more reproducible builds.
+.git
+.github
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.venv
+venv
+mlruns
+data
+tests
+*.md
+!README.md
+.DS_Store

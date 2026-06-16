@@ -1,0 +1,55 @@
+# GitHub Actions = CI/CD. "CI" (Continuous Integration) means: every time you
+# push code, a fresh cloud machine automatically installs your project and runs
+# the linter + tests. If anything is broken, you find out in minutes, on a clean
+# machine, before it ever reaches users. "CD" (Continuous Delivery) extends that
+# to automatically building/deploying when tests pass.
+#
+# This is completely free for public repos on GitHub (and generous free minutes
+# for private ones).
+
+name: CI
+
+# Run on every push and every pull request to main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out your code onto the runner.
+      - uses: actions/checkout@v4
+
+      # 2. Install Python.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"  # cache installed packages between runs => faster CI
+
+      # 3. Install the project + dev tools (pytest, ruff).
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e . --no-deps
+
+      # 4. Lint: catch style/bug-prone code before running tests.
+      - name: Lint with ruff
+        run: ruff check .
+
+      # 5. Test: the synthetic-data tests need no dataset and no trained model,
+      #    so they run fast and deterministically on the clean runner.
+      - name: Run tests
+        run: pytest
+
+  # A second job proves the Docker image actually builds. Runs in parallel.
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t telco-churn-api:ci .
