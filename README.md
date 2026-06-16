@@ -173,8 +173,13 @@ don't overfit to one lucky split.
 python -m churn.train --n-trials 30
 ```
 
-Our trained model scores **ROC-AUC ≈ 0.85** on the held-out test set — solid for
-this dataset.
+`make install` already includes the training tools. If you installed only the
+runtime (`pip install -r requirements.txt`), add the training extras first:
+`pip install -r requirements-train.txt` (these — `mlflow`, `optuna` — are kept out
+of the deployed image to keep it small). Training is **deterministic**: the split,
+the model, and the Optuna search are all seeded, so every run reproduces the same
+model. Ours scores **ROC-AUC ≈ 0.85** on the held-out test set — solid for this
+dataset.
 
 ---
 

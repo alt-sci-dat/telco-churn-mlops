@@ -5,7 +5,9 @@
 # anywhere.
 
 # Start from a slim official Python image (small = faster pulls, less to attack).
-FROM python:3.12-slim
+# Matches the Python version the model was trained/pickled with — loading a
+# pickled model under a different minor version can break, so keep these aligned.
+FROM python:3.13-slim
 
 # Don't write .pyc files; flush logs immediately so they show up in real time.
 ENV PYTHONDONTWRITEBYTECODE=1 \

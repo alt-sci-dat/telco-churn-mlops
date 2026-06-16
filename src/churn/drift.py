@@ -50,6 +50,10 @@ def build_reference(df: pd.DataFrame, n_bins: int = 10) -> dict:
         series = pd.to_numeric(df[col], errors="coerce").dropna()
         # Quantile-based edges adapt to the data's actual shape.
         edges = np.unique(np.quantile(series, np.linspace(0, 1, n_bins + 1)))
+        # A constant (or near-constant) feature collapses to <2 unique edges, which
+        # np.histogram can't bin. Fall back to a single bin spanning the value.
+        if len(edges) < 2:
+            edges = np.array([series.min(), series.min() + 1e-9])
         counts, _ = np.histogram(series, bins=edges)
         proportions = counts / max(counts.sum(), 1)
         reference["numeric"][col] = {
@@ -75,7 +79,12 @@ def _numeric_psi(ref: dict, values: pd.Series) -> float:
     edges = np.array(ref["edges"])
     expected = np.array(ref["proportions"])
     values = pd.to_numeric(values, errors="coerce").dropna()
-    counts, _ = np.histogram(values, bins=edges)
+    # Clamp into the trained range so out-of-range values land in the edge bins
+    # instead of being silently dropped by np.histogram. Otherwise live data that
+    # shifts *beyond* the training max would understate drift — the opposite of
+    # what we want from a drift monitor.
+    clamped = np.clip(values.to_numpy(), edges[0], edges[-1])
+    counts, _ = np.histogram(clamped, bins=edges)
     actual = counts / max(counts.sum(), 1)
     return _psi(expected, actual)
 

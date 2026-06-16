@@ -79,7 +79,10 @@ class PredictionResponse(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    customers: list[CustomerFeatures]
+    # Bound the batch size at the validation boundary: an unbounded list lets one
+    # request exhaust memory on a small instance (DoS). min_length=1 also makes
+    # an empty batch a clean 422 instead of needing a manual check downstream.
+    customers: list[CustomerFeatures] = Field(..., min_length=1, max_length=1000)
 
 
 class BatchPredictionResponse(BaseModel):

@@ -1,0 +1,6 @@
+# Training-time dependencies: the runtime stack PLUS the tools only used while
+# training (hyperparameter tuning + experiment tracking). The deployed API does
+# not need these, so they're kept out of requirements.txt / the Docker image.
+-r requirements.txt
+optuna==4.9.0
+mlflow==3.13.0

@@ -1,14 +1,18 @@
-# Runtime dependencies (what the deployed API needs to run).
-# Kept separate from dev tools so the Docker image stays small.
-pandas>=2.2
-numpy>=1.26
-scikit-learn>=1.4
-xgboost>=2.0
-optuna>=3.6
-mlflow>=2.14
-fastapi>=0.111
-uvicorn[standard]>=0.30
-pydantic>=2.7
-joblib>=1.4
-scipy>=1.11
-requests>=2.31
+# Runtime dependencies — ONLY what the deployed API needs to serve predictions.
+# Training-only tools (mlflow, optuna) live in requirements-train.txt so the
+# Docker image stays small: the API never imports them.
+#
+# Versions are PINNED (==) to exactly what trained the committed model. A
+# joblib-pickled scikit-learn pipeline is not guaranteed to load under different
+# library versions, so pinning is what makes the deployed model reproducible.
+# Re-pin these after any retrain: `pip freeze | grep -iE '<pkg>='`.
+pandas==2.3.3
+numpy==2.4.6
+scikit-learn==1.9.0
+xgboost==3.2.0
+fastapi==0.137.1
+uvicorn[standard]==0.49.0
+pydantic==2.13.4
+joblib==1.5.3
+scipy==1.17.1
+requests==2.34.2

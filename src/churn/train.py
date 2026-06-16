@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 
+import joblib
 import mlflow
 import optuna
 from sklearn.metrics import (
@@ -107,8 +108,14 @@ def train(n_trials: int = 30, experiment_name: str = "telco-churn") -> dict:
     mlflow.set_experiment(experiment_name)
 
     # --- 3. Tune hyperparameters with Optuna ---
-    # `direction="maximize"` because higher ROC-AUC is better.
-    study = optuna.create_study(direction="maximize")
+    # `direction="maximize"` because higher ROC-AUC is better. We seed the sampler
+    # so the search is deterministic: combined with the seeded split and model,
+    # `make train` produces the exact same model every run (the reproducibility
+    # promised in config.RANDOM_STATE).
+    study = optuna.create_study(
+        direction="maximize",
+        sampler=optuna.samplers.TPESampler(seed=config.RANDOM_STATE),
+    )
     study.optimize(
         lambda t: _objective(t, X_train, y_train, scale_pos_weight),
         n_trials=n_trials,
@@ -129,9 +136,9 @@ def train(n_trials: int = 30, experiment_name: str = "telco-churn") -> dict:
         metrics = {
             "roc_auc": roc_auc_score(y_test, proba),
             "accuracy": accuracy_score(y_test, preds),
-            "precision": precision_score(y_test, preds),
-            "recall": recall_score(y_test, preds),
-            "f1": f1_score(y_test, preds),
+            "precision": precision_score(y_test, preds, zero_division=0),
+            "recall": recall_score(y_test, preds, zero_division=0),
+            "f1": f1_score(y_test, preds, zero_division=0),
             "cv_roc_auc": study.best_value,
         }
 
@@ -143,8 +150,6 @@ def train(n_trials: int = 30, experiment_name: str = "telco-churn") -> dict:
 
         # --- 5. Persist artifacts the API will load ---
         config.MODEL_DIR.mkdir(parents=True, exist_ok=True)
-        import joblib
-
         joblib.dump(pipeline, config.MODEL_PATH)
 
         # Build + save the drift reference from the TRAINING features. Live data

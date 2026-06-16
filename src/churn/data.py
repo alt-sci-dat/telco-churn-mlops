@@ -12,9 +12,14 @@ The raw Telco dataset has two well-known quirks we fix here:
 
 from __future__ import annotations
 
+import logging
+from pathlib import Path
+
 import pandas as pd
 
 from . import config
+
+logger = logging.getLogger(__name__)
 
 
 def download_data(force: bool = False) -> pd.DataFrame:
@@ -36,7 +41,8 @@ def download_data(force: bool = False) -> pd.DataFrame:
             df = pd.read_csv(url)
             df.to_csv(config.RAW_CSV, index=False)
             return df
-        except Exception:  # noqa: BLE001 - try the next source on any failure
+        except Exception as exc:  # noqa: BLE001 - try the next source on any failure
+            logger.warning("Dataset mirror failed (%s): %s", url, exc)
             continue
 
     # --- Fall back to Kaggle if the user has it set up ---
@@ -45,13 +51,13 @@ def download_data(force: bool = False) -> pd.DataFrame:
 
         path = kagglehub.dataset_download(config.KAGGLE_DATASET)
         # kagglehub returns a folder; find the CSV inside it.
-        csvs = list(__import__("pathlib").Path(path).glob("*.csv"))
+        csvs = list(Path(path).glob("*.csv"))
         if csvs:
             df = pd.read_csv(csvs[0])
             df.to_csv(config.RAW_CSV, index=False)
             return df
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Kaggle fallback failed: %s", exc)
 
     raise RuntimeError(
         "Could not download the dataset from any public mirror or Kaggle. "

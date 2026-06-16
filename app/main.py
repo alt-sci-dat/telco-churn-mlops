@@ -96,12 +96,17 @@ def _score(model, customers: list[CustomerFeatures]) -> list[PredictionResponse]
 # --- Endpoints ---------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse, tags=["ops"])
 def health() -> HealthResponse:
-    """Liveness/readiness probe. Deploy platforms ping this to check the app."""
-    return HealthResponse(
-        status="ok",
-        model_loaded=config.MODEL_PATH.exists(),
-        version=__version__,
-    )
+    """Liveness/readiness probe. Deploy platforms ping this to check the app.
+
+    `model_loaded` reflects whether the model actually deserializes, not just
+    whether the file exists — a corrupt artifact should report unhealthy.
+    """
+    try:
+        get_model()
+        model_loaded = True
+    except Exception:  # noqa: BLE001 - any load failure means "not ready"
+        model_loaded = False
+    return HealthResponse(status="ok", model_loaded=model_loaded, version=__version__)
 
 
 @app.post("/predict", response_model=PredictionResponse, tags=["predictions"])
@@ -114,9 +119,11 @@ def predict(customer: CustomerFeatures, model=Depends(get_model)) -> PredictionR
 def predict_batch(
     request: BatchPredictionRequest, model=Depends(get_model)
 ) -> BatchPredictionResponse:
-    """Predict churn for many customers in one call."""
-    if not request.customers:
-        raise HTTPException(status_code=422, detail="`customers` must not be empty.")
+    """Predict churn for many customers in one call.
+
+    Batch size is bounded by the schema (1..1000), so an empty or oversized
+    request is rejected with a 422 before reaching here.
+    """
     return BatchPredictionResponse(predictions=_score(model, request.customers))
 
 

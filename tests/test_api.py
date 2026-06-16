@@ -86,6 +86,18 @@ def test_batch_predict(client):
     assert len(resp.json()["predictions"]) == 2
 
 
+def test_batch_rejects_empty(client):
+    # min_length=1 => an empty batch is a clean validation error.
+    resp = client.post("/predict/batch", json={"customers": []})
+    assert resp.status_code == 422
+
+
+def test_batch_rejects_oversized(client):
+    # max_length=1000 guards against a memory-exhaustion request.
+    resp = client.post("/predict/batch", json={"customers": [VALID_CUSTOMER] * 1001})
+    assert resp.status_code == 422
+
+
 def test_drift_endpoint_after_requests(client):
     # No requests yet -> graceful empty report.
     assert client.get("/drift").json()["n_samples"] == 0

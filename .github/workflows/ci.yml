@@ -27,7 +27,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"  # match training + the Docker image
           cache: "pip"  # cache installed packages between runs => faster CI
 
       # 3. Install the project + dev tools (pytest, ruff).

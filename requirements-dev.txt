@@ -1,5 +1,6 @@
 # Development + CI tools (testing, linting). Not installed in the production image.
--r requirements.txt
+# Includes the training deps because the test suite exercises the train workflow.
+-r requirements-train.txt
 pytest>=8.0
 httpx>=0.27
 ruff>=0.5
