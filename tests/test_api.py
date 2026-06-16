@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import _REQUEST_BUFFER, app, get_model, get_reference
-from churn import drift
+from churn import config, drift
 
 VALID_CUSTOMER = {
     "gender": "Female",
@@ -115,3 +115,8 @@ def test_metadata_returns_metrics(client):
     body = resp.json()
     assert "metrics" in body
     assert "roc_auc" in body["metrics"]
+
+
+def test_metadata_503_when_missing(client, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "METADATA_PATH", tmp_path / "no_such_file.json")
+    assert client.get("/metadata").status_code == 503
