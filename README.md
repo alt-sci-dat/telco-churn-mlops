@@ -1,3 +1,19 @@
+---
+title: Telco Churn MLOps
+emoji: 📉
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 8000
+pinned: false
+license: mit
+---
+
+<!-- The YAML block above configures the Hugging Face Space (it must be the very
+first thing in the file). `app_port: 8000` tells HF our container listens on 8000,
+matching the Dockerfile. On GitHub this block renders as a small table; the real
+README starts below. Visit the Space's /docs once it builds. -->
+
 # Telco Customer Churn — Production-Grade MLOps Project
 
 Predict which telecom customers are about to cancel ("churn"), served as a real
