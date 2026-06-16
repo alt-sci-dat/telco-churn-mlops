@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # 1. Check out your code onto the runner.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true  # pull the LFS-tracked model so tests load the real artifact
 
@@ -52,7 +52,7 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true  # the image COPYs models/, so the real LFS artifact is needed
       - name: Build Docker image
