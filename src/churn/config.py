@@ -34,6 +34,7 @@ METADATA_PATH = MODEL_DIR / "model_metadata.json"
 # Allow overriding the model location via env var (used by Docker / deployment).
 MODEL_PATH = Path(os.getenv("MODEL_PATH", str(MODEL_PATH)))
 REFERENCE_PATH = Path(os.getenv("REFERENCE_PATH", str(REFERENCE_PATH)))
+METADATA_PATH = Path(os.getenv("METADATA_PATH", str(METADATA_PATH)))
 
 # ---------------------------------------------------------------------------
 # Dataset details. The IBM "Telco Customer Churn" dataset (same one Kaggle hosts).

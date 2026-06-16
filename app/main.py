@@ -17,12 +17,15 @@ Design notes for production-readiness:
 
 from __future__ import annotations
 
+import json
 from collections import deque
 from functools import lru_cache
+from pathlib import Path
 
 import joblib
 import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
 
 from churn import __version__, config, drift
 from churn.schemas import (
@@ -43,6 +46,8 @@ app = FastAPI(
 # Rolling buffer of the most recent requests' features, used for drift checks.
 # A deque with maxlen automatically discards the oldest entries — bounded memory.
 _REQUEST_BUFFER: deque[dict] = deque(maxlen=5000)
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 # --- Dependencies (loaded lazily + cached, overridable in tests) -------------
@@ -161,6 +166,15 @@ def drift_report(reference: dict = Depends(get_reference)) -> DriftResponse:
     )
 
 
-@app.get("/", tags=["ops"])
-def root() -> dict:
-    return {"message": "Telco Churn API. See /docs for interactive documentation."}
+@app.get("/metadata", tags=["ops"])
+def metadata() -> dict:
+    """Return the trained model's metrics so the UI can display real numbers."""
+    if not config.METADATA_PATH.exists():
+        raise HTTPException(status_code=503, detail="Model metadata not available.")
+    return json.loads(config.METADATA_PATH.read_text())
+
+
+@app.get("/", response_class=FileResponse, tags=["ops"])
+def root() -> FileResponse:
+    """Serve the single-page web UI."""
+    return FileResponse(STATIC_DIR / "index.html")

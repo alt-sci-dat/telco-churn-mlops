@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import _REQUEST_BUFFER, app, get_model, get_reference
-from churn import drift
+from churn import config, drift
 
 VALID_CUSTOMER = {
     "gender": "Female",
@@ -107,3 +107,23 @@ def test_drift_endpoint_after_requests(client):
     report = client.get("/drift").json()
     assert report["n_samples"] >= 5
     assert "features" in report
+
+
+def test_metadata_returns_metrics(client):
+    resp = client.get("/metadata")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "metrics" in body
+    assert "roc_auc" in body["metrics"]
+
+
+def test_metadata_503_when_missing(client, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "METADATA_PATH", tmp_path / "no_such_file.json")
+    assert client.get("/metadata").status_code == 503
+
+
+def test_root_serves_html(client):
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/html")
+    assert "Telco Churn Predictor" in resp.text
