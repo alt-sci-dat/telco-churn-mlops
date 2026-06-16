@@ -160,6 +160,9 @@ function riskColor(level) {
   return level === "high" ? "var(--red)" : level === "medium" ? "var(--amber)" : "var(--green)";
 }
 function showBanner(id, msg) { const b = document.getElementById(id); b.textContent = msg; b.style.display = msg ? "block" : "none"; }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
 async function loadMetadata() {
   try {
@@ -230,13 +233,13 @@ document.getElementById("driftBtn").addEventListener("click", async () => {
     if (r.status === 503) { showBanner("driftBanner", "Drift reference not available."); return; }
     if (!r.ok) throw new Error("Server error " + r.status);
     const d = await r.json();
-    if (!d.n_samples) { body.innerHTML = `<p class="empty">${d.message || "Make a few predictions first."}</p>`; return; }
+    if (!d.n_samples) { body.innerHTML = `<p class="empty">${escapeHtml(d.message || "Make a few predictions first.")}</p>`; return; }
     const col = d.drift_detected ? "var(--red)" : "var(--green)";
-    let html = `<div class="status" style="background:${col}1a;color:${col}">${d.message} (${d.n_samples} samples)</div>`;
+    let html = `<div class="status" style="background:${col}1a;color:${col}">${escapeHtml(d.message)} (${d.n_samples} samples)</div>`;
     for (const [feat, info] of Object.entries(d.features)) {
       const lvl = info.drift, fc = lvl === "significant" ? "var(--red)" : lvl === "moderate" ? "var(--amber)" : "var(--green)";
       const w = Math.min(info.psi / 0.5, 1) * 100;
-      html += `<div class="drift-row"><span>${feat}</span>
+      html += `<div class="drift-row"><span>${escapeHtml(feat)}</span>
         <span class="track"><span class="fill" style="width:${w}%;background:${fc}"></span></span>
         <span>${info.psi.toFixed(3)}</span></div>`;
     }
