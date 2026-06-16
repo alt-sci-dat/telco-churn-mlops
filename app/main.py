@@ -17,6 +17,7 @@ Design notes for production-readiness:
 
 from __future__ import annotations
 
+import json
 from collections import deque
 from functools import lru_cache
 
@@ -159,6 +160,14 @@ def drift_report(reference: dict = Depends(get_reference)) -> DriftResponse:
         features=report["features"],
         message=msg,
     )
+
+
+@app.get("/metadata", tags=["ops"])
+def metadata() -> dict:
+    """Return the trained model's metrics so the UI can display real numbers."""
+    if not config.METADATA_PATH.exists():
+        raise HTTPException(status_code=503, detail="Model metadata not available.")
+    return json.loads(config.METADATA_PATH.read_text())
 
 
 @app.get("/", tags=["ops"])

@@ -107,3 +107,11 @@ def test_drift_endpoint_after_requests(client):
     report = client.get("/drift").json()
     assert report["n_samples"] >= 5
     assert "features" in report
+
+
+def test_metadata_returns_metrics(client):
+    resp = client.get("/metadata")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "metrics" in body
+    assert "roc_auc" in body["metrics"]
