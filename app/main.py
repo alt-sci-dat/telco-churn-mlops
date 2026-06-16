@@ -20,10 +20,12 @@ from __future__ import annotations
 import json
 from collections import deque
 from functools import lru_cache
+from pathlib import Path
 
 import joblib
 import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
 
 from churn import __version__, config, drift
 from churn.schemas import (
@@ -44,6 +46,8 @@ app = FastAPI(
 # Rolling buffer of the most recent requests' features, used for drift checks.
 # A deque with maxlen automatically discards the oldest entries — bounded memory.
 _REQUEST_BUFFER: deque[dict] = deque(maxlen=5000)
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 # --- Dependencies (loaded lazily + cached, overridable in tests) -------------
@@ -170,6 +174,7 @@ def metadata() -> dict:
     return json.loads(config.METADATA_PATH.read_text())
 
 
-@app.get("/", tags=["ops"])
-def root() -> dict:
-    return {"message": "Telco Churn API. See /docs for interactive documentation."}
+@app.get("/", response_class=FileResponse, tags=["ops"])
+def root() -> FileResponse:
+    """Serve the single-page web UI."""
+    return FileResponse(STATIC_DIR / "index.html")

@@ -120,3 +120,10 @@ def test_metadata_returns_metrics(client):
 def test_metadata_503_when_missing(client, tmp_path, monkeypatch):
     monkeypatch.setattr(config, "METADATA_PATH", tmp_path / "no_such_file.json")
     assert client.get("/metadata").status_code == 503
+
+
+def test_root_serves_html(client):
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/html")
+    assert "Telco Churn Predictor" in resp.text
